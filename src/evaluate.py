@@ -6,27 +6,43 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, f1_score, ConfusionMatrixDisplay
 
 def patch_mlflow_db():
-    """Fixes absolute paths in the SQLite DB to match the CI runner's workspace."""
+    """Robustly fixes absolute paths in the SQLite DB to match the CI runner's workspace."""
     db_path = 'mlflow.db'
     if not os.path.exists(db_path):
+        print("Warning: mlflow.db not found!")
         return
         
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Create the new base path for the current environment
-    new_base = "file://" + os.path.abspath(os.getcwd())
+    # Generate the correct base URI for the GitHub Actions runner
+    current_dir = os.path.abspath(os.getcwd())
+    new_base = f"file://{current_dir}"
     
-    # Patch both the runs table and model_versions table
-    for table, column in [("runs", "artifact_uri"), ("model_versions", "source")]:
+    # We must patch all three of these tables for MLflow to resolve the path correctly
+    tables_and_columns = [
+        ("experiments", "artifact_location"),
+        ("runs", "artifact_uri"),
+        ("model_versions", "source")
+    ]
+    
+    for table, column in tables_and_columns:
         try:
-            # Replaces the old absolute path with the new runner path
-            query = f"""
-                UPDATE {table} 
-                SET {column} = ? || SUBSTR({column}, INSTR({column}, '/mlruns'))
-                WHERE {column} LIKE '%/mlruns%'
-            """
-            cursor.execute(query, (new_base,))
+            cursor.execute(f"SELECT rowid, {column} FROM {table} WHERE {column} IS NOT NULL")
+            rows = cursor.fetchall()
+            for rowid, old_uri in rows:
+                if 'mlruns' in old_uri:
+                    # Find exactly where 'mlruns' starts in the old string
+                    idx = old_uri.find('/mlruns')
+                    if idx == -1:
+                        idx = old_uri.find('mlruns')
+                        suffix = "/" + old_uri[idx:]
+                    else:
+                        suffix = old_uri[idx:]
+                    
+                    # Construct the new absolute URI
+                    new_uri = new_base + suffix
+                    cursor.execute(f"UPDATE {table} SET {column} = ? WHERE rowid = ?", (new_uri, rowid))
         except Exception as e:
             print(f"Skipping {table}: {e}")
             
