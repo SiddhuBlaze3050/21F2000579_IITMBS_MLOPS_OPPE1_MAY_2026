@@ -1,0 +1,4 @@
+[core]
+    remote = gcs_remote
+['remote "gcs_remote"']
+    url = gs://21f2000579-mlops-oppe1-bucket/exam
