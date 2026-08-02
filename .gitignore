@@ -12,10 +12,11 @@ venv/
 !data/**/*.dvc
 
 # MLflow / Local DBs
-mlruns/
-*.db
 .feast/
 
 # DVC local storage
 .dvc/cache
 .dvc/local
+mlruns/
+*.db
+/mlruns
