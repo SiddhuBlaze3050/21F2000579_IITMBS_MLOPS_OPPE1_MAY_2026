@@ -19,12 +19,15 @@ def evaluate():
     run_id = latest_version.run_id
     experiment_id = client.get_run(run_id).info.experiment_id
     
-    # 2. Construct the direct relative path (Bypassing the broken DB absolute paths!)
-    local_model_path = f"mlruns/{experiment_id}/{run_id}/artifacts/model"
-    print(f"Loading model directly from relative path: {local_model_path}")
+    # 2. Construct the ABSOLUTE file:// URI for the GitHub runner
+    current_dir = os.path.abspath(os.getcwd())
+    local_model_path = os.path.join(current_dir, "mlruns", experiment_id, run_id, "artifacts", "model")
+    absolute_model_uri = f"file://{local_model_path}"
     
-    # 3. Load the model
-    model = mlflow.sklearn.load_model(local_model_path)
+    print(f"Loading model directly from absolute URI: {absolute_model_uri}")
+    
+    # 3. Load the model using the absolute URI
+    model = mlflow.sklearn.load_model(absolute_model_uri)
     
     print("Loading test data...")
     test_df = pd.read_parquet("data/splits/test.parquet")
