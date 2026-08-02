@@ -95,3 +95,5 @@ python src/evaluate.py
 PYTHONPATH=. pytest tests/ -v
 
 ```
+
+Final CML Report: https://github.com/SiddhuBlaze3050/21F2000579_IITMBS_MLOPS_OPPE1_MAY_2026/commit/1f8751820cd0e74962e7020c464d6bb88b17a3a7#commitcomment-194677712
