@@ -1,0 +1,21 @@
+# Python / Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.ipynb_checkpoints/
+
+# Data Files (Tracked via DVC instead)
+*.csv
+!data/**/*.dvc
+
+# MLflow / Local DBs
+mlruns/
+*.db
+.feast/
+
+# DVC local storage
+.dvc/cache
+.dvc/local
