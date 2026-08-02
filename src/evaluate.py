@@ -71,9 +71,14 @@ def evaluate():
         
     print(f"Success! Loading model from: {model_path}")
     
-    # Load the model directly into memory
+    # Load the model directly into memory (with fix for skops >= 0.10)
     if model_path.endswith(".skops"):
-        model = sio.load(model_path, trusted=True)
+        try:
+            model = sio.load(model_path, trusted=True)
+        except TypeError:
+            # Handles the CVE-2024-37065 security update in newer skops versions
+            untrusted = sio.get_untrusted_types(file=model_path)
+            model = sio.load(model_path, trusted=untrusted)
     elif model_path.endswith(".joblib"):
         model = joblib.load(model_path)
     else:
